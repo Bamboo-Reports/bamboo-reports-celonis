@@ -123,7 +123,17 @@ export const Header = React.memo(function Header({ onRefresh }: HeaderProps): JS
               />
             </div>
             <div className="min-w-0">
-              <p className="truncate text-lg font-bold text-foreground">Bamboo Reports</p>
+              <div className="flex items-center gap-2">
+                <p className="truncate text-lg font-bold text-foreground">Bamboo Reports</p>
+                <span className="text-muted-foreground">•</span>
+                <Image
+                  src="/partner_celonis.svg"
+                  alt="Celonis logo"
+                  width={88}
+                  height={22}
+                  className="h-5 w-auto shrink-0 -translate-y-px object-contain invert dark:invert-0"
+                />
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
