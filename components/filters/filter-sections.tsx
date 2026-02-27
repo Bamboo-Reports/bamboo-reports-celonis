@@ -1,0 +1,644 @@
+import React from "react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Slider } from "@/components/ui/slider"
+import { EnhancedMultiSelect } from "@/components/enhanced-multi-select"
+import { AccountAutocomplete } from "@/components/filters/account-autocomplete"
+import { TitleKeywordInput } from "@/components/filters/title-keyword-input"
+import type { Filters, AvailableOptions } from "@/lib/types"
+
+interface FilterSectionBaseProps {
+  pendingFilters: Filters
+  availableOptions: AvailableOptions
+  isApplying: boolean
+  activeFilter: string | null
+  setPendingFilters: React.Dispatch<React.SetStateAction<Filters>>
+  setActiveFilter: (filter: string | null) => void
+}
+
+interface AccountFilterSectionProps extends FilterSectionBaseProps {
+  accountNames: string[]
+  revenueRange: { min: number; max: number }
+  yearsInIndiaRange: { min: number; max: number }
+  handleMinRevenueChange: (value: string) => void
+  handleMaxRevenueChange: (value: string) => void
+  handleRevenueRangeChange: (value: [number, number]) => void
+  handleMinYearsInIndiaChange: (value: string) => void
+  handleMaxYearsInIndiaChange: (value: string) => void
+  handleYearsInIndiaRangeChange: (value: [number, number]) => void
+  formatRevenueInMillions: (value: number) => string
+}
+
+interface CenterFilterSectionProps extends FilterSectionBaseProps {
+  centerIncYearRange: { min: number; max: number }
+  handleMinCenterIncYearChange: (value: string) => void
+  handleMaxCenterIncYearChange: (value: string) => void
+  handleCenterIncYearRangeChange: (value: [number, number]) => void
+}
+
+interface ProspectFilterSectionProps extends FilterSectionBaseProps {}
+
+export function AccountFiltersSection({
+  pendingFilters,
+  availableOptions,
+  isApplying,
+  activeFilter,
+  setPendingFilters,
+  setActiveFilter,
+  accountNames,
+  revenueRange,
+  yearsInIndiaRange,
+  handleMinRevenueChange,
+  handleMaxRevenueChange,
+  handleRevenueRangeChange,
+  handleMinYearsInIndiaChange,
+  handleMaxYearsInIndiaChange,
+  handleYearsInIndiaRangeChange,
+  formatRevenueInMillions,
+}: AccountFilterSectionProps) {
+  return (
+    <div className="max-h-[320px] overflow-y-auto pr-2">
+        <div className="space-y-4 pt-2">
+          <div className="space-y-3">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-medium">Revenue (USDMn)</Label>
+                <div className="flex items-center gap-2">
+                <Checkbox
+                  id="include-null-revenue"
+                  checked={pendingFilters.accountHqRevenueIncludeNull}
+                  onCheckedChange={(checked) =>
+                    setPendingFilters((prev) => ({
+                      ...prev,
+                      accountHqRevenueIncludeNull: checked === true,
+                    }))
+                  }
+                  className="h-3.5 w-3.5"
+                />
+                <Label
+                  htmlFor="include-null-revenue"
+                  className="text-xs text-muted-foreground cursor-pointer select-none"
+                >
+                  Include all
+                </Label>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="min-revenue" className="text-xs">Min</Label>
+                <Input
+                  id="min-revenue"
+                  type="number"
+                  value={pendingFilters.accountHqRevenueRange[0]}
+                  onChange={(e) => handleMinRevenueChange(e.target.value)}
+                  min={revenueRange.min}
+                  max={pendingFilters.accountHqRevenueRange[1]}
+                  className="text-xs h-8"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="max-revenue" className="text-xs">Max</Label>
+                <Input
+                  id="max-revenue"
+                  type="number"
+                  value={pendingFilters.accountHqRevenueRange[1]}
+                  onChange={(e) => handleMaxRevenueChange(e.target.value)}
+                  min={pendingFilters.accountHqRevenueRange[0]}
+                  max={revenueRange.max}
+                  className="text-xs h-8"
+                />
+              </div>
+            </div>
+            <div className="px-2">
+              <Slider
+                value={pendingFilters.accountHqRevenueRange}
+                onValueChange={(value) => handleRevenueRangeChange(value as [number, number])}
+                min={revenueRange.min}
+                max={revenueRange.max}
+                step={Math.max(1, Math.floor((revenueRange.max - revenueRange.min) / 1000))}
+                className="w-full"
+              />
+            </div>
+            <div className="flex justify-between text-xs text-muted-foreground px-2">
+              <span>{formatRevenueInMillions(revenueRange.min)}</span>
+              <span>{formatRevenueInMillions(revenueRange.max)}</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Account Name</Label>
+            <AccountAutocomplete
+              accountNames={accountNames}
+              selectedAccounts={pendingFilters.accountGlobalLegalNameKeywords}
+              onChange={(keywords) => setPendingFilters((prev) => ({ ...prev, accountGlobalLegalNameKeywords: keywords }))}
+              placeholder="Type to search account names..."
+              trackingKey="accountGlobalLegalNameKeywords"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Employee Range</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.accountHqEmployeeRangeValues}
+              selected={pendingFilters.accountHqEmployeeRangeValues}
+              trackingKey="accountHqEmployeeRangeValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, accountHqEmployeeRangeValues: selected }))
+                setActiveFilter("accountHqEmployeeRangeValues")
+              }}
+              placeholder="Select employees range..."
+              isApplying={isApplying && activeFilter === "accountHqEmployeeRangeValues"}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">IND Employee Range</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.accountCenterEmployeesRangeValues}
+              selected={pendingFilters.accountCenterEmployeesRangeValues}
+              trackingKey="accountCenterEmployeesRangeValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, accountCenterEmployeesRangeValues: selected }))
+                setActiveFilter("accountCenterEmployeesRangeValues")
+              }}
+              placeholder="Select center employees..."
+              isApplying={isApplying && activeFilter === "accountCenterEmployeesRangeValues"}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-medium">Years In India</Label>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="include-null-years-in-india"
+                  checked={pendingFilters.yearsInIndiaIncludeNull}
+                  onCheckedChange={(checked) =>
+                    setPendingFilters((prev) => ({
+                      ...prev,
+                      yearsInIndiaIncludeNull: checked === true,
+                    }))
+                  }
+                  className="h-3.5 w-3.5"
+                />
+                <Label
+                  htmlFor="include-null-years-in-india"
+                  className="text-xs text-muted-foreground cursor-pointer select-none"
+                >
+                  Include all
+                </Label>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="min-years-in-india" className="text-xs">Min</Label>
+                <Input
+                  id="min-years-in-india"
+                  type="number"
+                  value={pendingFilters.accountYearsInIndiaRange[0]}
+                  onChange={(e) => handleMinYearsInIndiaChange(e.target.value)}
+                  min={yearsInIndiaRange.min}
+                  max={pendingFilters.accountYearsInIndiaRange[1]}
+                  className="text-xs h-8"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="max-years-in-india" className="text-xs">Max</Label>
+                <Input
+                  id="max-years-in-india"
+                  type="number"
+                  value={pendingFilters.accountYearsInIndiaRange[1]}
+                  onChange={(e) => handleMaxYearsInIndiaChange(e.target.value)}
+                  min={pendingFilters.accountYearsInIndiaRange[0]}
+                  max={yearsInIndiaRange.max}
+                  className="text-xs h-8"
+                />
+              </div>
+            </div>
+            <div className="px-2">
+              <Slider
+                value={pendingFilters.accountYearsInIndiaRange}
+                onValueChange={(value) => handleYearsInIndiaRangeChange(value as [number, number])}
+                min={yearsInIndiaRange.min}
+                max={yearsInIndiaRange.max}
+                step={1}
+                className="w-full"
+              />
+            </div>
+            <div className="flex justify-between text-xs text-muted-foreground px-2">
+              <span>{yearsInIndiaRange.min.toLocaleString()}</span>
+              <span>{yearsInIndiaRange.max.toLocaleString()}</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Region</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.accountHqRegionValues || []}
+              selected={pendingFilters.accountHqRegionValues}
+              trackingKey="accountHqRegionValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, accountHqRegionValues: selected }))
+                setActiveFilter("accountHqRegionValues")
+              }}
+              placeholder="Select regions..."
+              isApplying={isApplying && activeFilter === "accountHqRegionValues"}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Country</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.accountHqCountryValues || []}
+              selected={pendingFilters.accountHqCountryValues}
+              trackingKey="accountHqCountryValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, accountHqCountryValues: selected }))
+                setActiveFilter("accountHqCountryValues")
+              }}
+              placeholder="Select countries..."
+              isApplying={isApplying && activeFilter === "accountHqCountryValues"}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Segment</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.accountPrimaryNatureValues}
+              selected={pendingFilters.accountPrimaryNatureValues}
+              trackingKey="accountPrimaryNatureValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, accountPrimaryNatureValues: selected }))
+                setActiveFilter("accountPrimaryNatureValues")
+              }}
+              placeholder="Select nature..."
+              isApplying={isApplying && activeFilter === "accountPrimaryNatureValues"}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Category</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.accountPrimaryCategoryValues}
+              selected={pendingFilters.accountPrimaryCategoryValues}
+              trackingKey="accountPrimaryCategoryValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, accountPrimaryCategoryValues: selected }))
+                setActiveFilter("accountPrimaryCategoryValues")
+              }}
+              placeholder="Select categories..."
+              isApplying={isApplying && activeFilter === "accountPrimaryCategoryValues"}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Industry</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.accountHqIndustryValues}
+              selected={pendingFilters.accountHqIndustryValues}
+              trackingKey="accountHqIndustryValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, accountHqIndustryValues: selected }))
+                setActiveFilter("accountHqIndustryValues")
+              }}
+              placeholder="Select industries..."
+              isApplying={isApplying && activeFilter === "accountHqIndustryValues"}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">NASSCOM Status</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.accountNasscomStatusValues}
+              selected={pendingFilters.accountNasscomStatusValues}
+              trackingKey="accountNasscomStatusValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, accountNasscomStatusValues: selected }))
+                setActiveFilter("accountNasscomStatusValues")
+              }}
+              placeholder="Select NASSCOM status..."
+              isApplying={isApplying && activeFilter === "accountNasscomStatusValues"}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Source</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.accountSourceValues}
+              selected={pendingFilters.accountSourceValues}
+              trackingKey="accountSourceValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, accountSourceValues: selected }))
+                setActiveFilter("accountSourceValues")
+              }}
+              placeholder="Select account source..."
+              isApplying={isApplying && activeFilter === "accountSourceValues"}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Type</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.accountTypeValues || []}
+              selected={pendingFilters.accountTypeValues}
+              trackingKey="accountTypeValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, accountTypeValues: selected }))
+                setActiveFilter("accountTypeValues")
+              }}
+              placeholder="Select account types..."
+              isApplying={isApplying && activeFilter === "accountTypeValues"}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Coverage</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.accountDataCoverageValues}
+              selected={pendingFilters.accountDataCoverageValues}
+              trackingKey="accountDataCoverageValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, accountDataCoverageValues: selected }))
+                setActiveFilter("accountDataCoverageValues")
+              }}
+              placeholder="Select data coverage..."
+              isApplying={isApplying && activeFilter === "accountDataCoverageValues"}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function CenterFiltersSection({
+  pendingFilters,
+  availableOptions,
+  isApplying,
+  activeFilter,
+  setPendingFilters,
+  setActiveFilter,
+  centerIncYearRange,
+  handleMinCenterIncYearChange,
+  handleMaxCenterIncYearChange,
+  handleCenterIncYearRangeChange,
+}: CenterFilterSectionProps) {
+  return (
+    <div className="max-h-[320px] overflow-y-auto pr-2">
+      <div className="space-y-4 pt-2">
+        <div className="space-y-3">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-medium">Timeline</Label>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="include-null-center-inc-year"
+                  checked={pendingFilters.centerIncYearIncludeNull}
+                  onCheckedChange={(checked) =>
+                    setPendingFilters((prev) => ({
+                      ...prev,
+                      centerIncYearIncludeNull: checked === true,
+                    }))
+                  }
+                  className="h-3.5 w-3.5"
+                />
+                <Label
+                  htmlFor="include-null-center-inc-year"
+                  className="text-xs text-muted-foreground cursor-pointer select-none"
+                >
+                  Include all
+                </Label>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="min-center-inc-year" className="text-xs">Min</Label>
+                <Input
+                  id="min-center-inc-year"
+                  type="number"
+                  value={pendingFilters.centerIncYearRange[0]}
+                  onChange={(e) => handleMinCenterIncYearChange(e.target.value)}
+                  min={centerIncYearRange.min}
+                  max={pendingFilters.centerIncYearRange[1]}
+                  className="text-xs h-8"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="max-center-inc-year" className="text-xs">Max</Label>
+                <Input
+                  id="max-center-inc-year"
+                  type="number"
+                  value={pendingFilters.centerIncYearRange[1]}
+                  onChange={(e) => handleMaxCenterIncYearChange(e.target.value)}
+                  min={pendingFilters.centerIncYearRange[0]}
+                  max={centerIncYearRange.max}
+                  className="text-xs h-8"
+                />
+              </div>
+            </div>
+            <div className="px-2">
+              <Slider
+                value={pendingFilters.centerIncYearRange}
+                onValueChange={(value) => handleCenterIncYearRangeChange(value as [number, number])}
+                min={centerIncYearRange.min}
+                max={centerIncYearRange.max}
+                step={1}
+                className="w-full"
+              />
+            </div>
+            <div className="flex justify-between text-xs text-muted-foreground px-2">
+              <span>{centerIncYearRange.min.toLocaleString()}</span>
+              <span>{centerIncYearRange.max.toLocaleString()}</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Status</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.centerStatusValues}
+              selected={pendingFilters.centerStatusValues}
+              trackingKey="centerStatusValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, centerStatusValues: selected }))
+                setActiveFilter("centerStatusValues")
+              }}
+              placeholder="Select status..."
+              isApplying={isApplying && activeFilter === "centerStatusValues"}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Employee Range</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.centerEmployeesRangeValues}
+              selected={pendingFilters.centerEmployeesRangeValues}
+              trackingKey="centerEmployeesRangeValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, centerEmployeesRangeValues: selected }))
+                setActiveFilter("centerEmployeesRangeValues")
+              }}
+              placeholder="Select employees range..."
+              isApplying={isApplying && activeFilter === "centerEmployeesRangeValues"}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Country</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.centerCountryValues}
+              selected={pendingFilters.centerCountryValues}
+              trackingKey="centerCountryValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, centerCountryValues: selected }))
+                setActiveFilter("centerCountryValues")
+              }}
+              placeholder="Select countries..."
+              isApplying={isApplying && activeFilter === "centerCountryValues"}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">State</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.centerStateValues}
+              selected={pendingFilters.centerStateValues}
+              trackingKey="centerStateValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, centerStateValues: selected }))
+                setActiveFilter("centerStateValues")
+              }}
+              placeholder="Select states..."
+              isApplying={isApplying && activeFilter === "centerStateValues"}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">City</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.centerCityValues}
+              selected={pendingFilters.centerCityValues}
+              trackingKey="centerCityValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, centerCityValues: selected }))
+                setActiveFilter("centerCityValues")
+              }}
+              placeholder="Select cities..."
+              isApplying={isApplying && activeFilter === "centerCityValues"}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Focus</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.centerFocusValues}
+              selected={pendingFilters.centerFocusValues}
+              trackingKey="centerFocusValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, centerFocusValues: selected }))
+                setActiveFilter("centerFocusValues")
+              }}
+              placeholder="Select focus..."
+              isApplying={isApplying && activeFilter === "centerFocusValues"}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Type</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.centerTypeValues}
+              selected={pendingFilters.centerTypeValues}
+              trackingKey="centerTypeValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, centerTypeValues: selected }))
+                setActiveFilter("centerTypeValues")
+              }}
+              placeholder="Select types..."
+              isApplying={isApplying && activeFilter === "centerTypeValues"}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Services Offered</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.functionNameValues}
+              selected={pendingFilters.functionNameValues}
+              trackingKey="functionNameValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, functionNameValues: selected }))
+                setActiveFilter("functionNameValues")
+              }}
+              placeholder="Select functions..."
+              isApplying={isApplying && activeFilter === "functionNameValues"}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Software In Use</Label>
+            <TitleKeywordInput
+              keywords={pendingFilters.techSoftwareInUseKeywords}
+              onChange={(keywords) =>
+                setPendingFilters((prev) => ({ ...prev, techSoftwareInUseKeywords: keywords }))
+              }
+              placeholder="e.g., SAP, Oracle, Workday..."
+              trackingKey="techSoftwareInUseKeywords"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function ProspectFiltersSection({
+  pendingFilters,
+  availableOptions,
+  isApplying,
+  activeFilter,
+  setPendingFilters,
+  setActiveFilter,
+}: ProspectFilterSectionProps) {
+  return (
+    <div className="max-h-[320px] overflow-y-auto pr-2">
+      <div className="space-y-4 pt-2">
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Department</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.prospectDepartmentValues || []}
+              selected={pendingFilters.prospectDepartmentValues}
+              trackingKey="prospectDepartmentValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, prospectDepartmentValues: selected }))
+                setActiveFilter("prospectDepartmentValues")
+              }}
+              placeholder="Select departments..."
+              isApplying={isApplying && activeFilter === "prospectDepartmentValues"}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Seniority Level</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.prospectLevelValues || []}
+              selected={pendingFilters.prospectLevelValues}
+              trackingKey="prospectLevelValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, prospectLevelValues: selected }))
+                setActiveFilter("prospectLevelValues")
+              }}
+              placeholder="Select levels..."
+              isApplying={isApplying && activeFilter === "prospectLevelValues"}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">City</Label>
+            <EnhancedMultiSelect
+              options={availableOptions.prospectCityValues || []}
+              selected={pendingFilters.prospectCityValues}
+              trackingKey="prospectCityValues"
+              onChange={(selected) => {
+                setPendingFilters((prev) => ({ ...prev, prospectCityValues: selected }))
+                setActiveFilter("prospectCityValues")
+              }}
+              placeholder="Select cities..."
+              isApplying={isApplying && activeFilter === "prospectCityValues"}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Job Title</Label>
+            <TitleKeywordInput
+              keywords={pendingFilters.prospectTitleKeywords}
+              onChange={(keywords) => setPendingFilters((prev) => ({ ...prev, prospectTitleKeywords: keywords }))}
+              placeholder="e.g., Manager, Director, VP..."
+              trackingKey="prospectTitleKeywords"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
